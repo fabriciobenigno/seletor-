@@ -36,29 +36,35 @@ html, body {
 
     transition:
         transform 0.35s ease,
-        opacity 0.35s ease;
+        opacity 0.35s ease,
+        filter 0.5s ease;
 
     backdrop-filter: blur(10px) saturate(160%);
     -webkit-backdrop-filter: blur(10px) saturate(160%);
     border: 2px solid rgba(255,255,255,0.2);
 }
 
-/* ENTRADA */
 .touch.active {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
-/* SELECIONADO */
-.touch.selected {
-    animation: pulse 1s ease forwards;
+.touch.dimmed {
+    filter: brightness(0.25);
+    transform: translate(-50%, -50%) scale(0.9);
 }
 
-@keyframes pulse {
+.touch.selected {
+    animation: cinematicPulse 1.2s ease forwards;
+    z-index: 10;
+    box-shadow: 0 0 50px rgba(255,255,255,0.9);
+}
+
+@keyframes cinematicPulse {
     0%   { transform: translate(-50%, -50%) scale(1); }
-    40%  { transform: translate(-50%, -50%) scale(1.7); }
-    70%  { transform: translate(-50%, -50%) scale(1.4); }
-    100% { transform: translate(-50%, -50%) scale(1.5); }
+    40%  { transform: translate(-50%, -50%) scale(2); }
+    70%  { transform: translate(-50%, -50%) scale(1.6); }
+    100% { transform: translate(-50%, -50%) scale(1.8); }
 }
 </style>
 </head>
@@ -82,6 +88,38 @@ let touchesMap = {};
 let usedColors = [];
 let timer = null;
 
+/* SOM DE CONGRATULAÇÃO */
+function playWinSound() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = "triangle";
+    osc2.type = "sine";
+
+    osc1.frequency.setValueAtTime(600, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.2);
+
+    osc2.frequency.setValueAtTime(900, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.2);
+
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start();
+    osc2.start();
+
+    osc1.stop(ctx.currentTime + 0.35);
+    osc2.stop(ctx.currentTime + 0.35);
+}
+
 /* Reinicia contador */
 function restartTimer() {
     clearTimeout(timer);
@@ -96,10 +134,19 @@ function selectRandom() {
     if (keys.length === 0) return;
 
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    touchesMap[randomKey].classList.add("selected");
+
+    Object.keys(touchesMap).forEach(key => {
+        if (key === randomKey) {
+            touchesMap[key].classList.add("selected");
+        } else {
+            touchesMap[key].classList.add("dimmed");
+        }
+    });
+
+    playWinSound();
 }
 
-/* Touch Start */
+/* TOUCH START */
 container.addEventListener("touchstart", (e) => {
 
     Array.from(e.changedTouches).forEach(touch => {
@@ -109,7 +156,6 @@ container.addEventListener("touchstart", (e) => {
         const circle = document.createElement("div");
         circle.classList.add("touch");
 
-        // escolher cor não repetida
         const available = colors.filter(c => !usedColors.includes(c));
         const color = available.length > 0
             ? available[Math.floor(Math.random() * available.length)]
@@ -133,7 +179,7 @@ container.addEventListener("touchstart", (e) => {
     restartTimer();
 });
 
-/* Touch Move */
+/* TOUCH MOVE */
 container.addEventListener("touchmove", (e) => {
 
     Array.from(e.changedTouches).forEach(touch => {
@@ -146,7 +192,7 @@ container.addEventListener("touchmove", (e) => {
 
 }, { passive: true });
 
-/* Touch End */
+/* TOUCH END */
 container.addEventListener("touchend", (e) => {
 
     Array.from(e.changedTouches).forEach(touch => {
@@ -171,7 +217,7 @@ container.addEventListener("touchend", (e) => {
     restartTimer();
 });
 
-/* Touch Cancel */
+/* TOUCH CANCEL */
 container.addEventListener("touchcancel", (e) => {
 
     Array.from(e.changedTouches).forEach(touch => {
