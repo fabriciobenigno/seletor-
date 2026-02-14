@@ -3,21 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Finger Selection Experience</title>
+<title>Finger Selection Cinematic</title>
 
 <style>
-
 html, body {
     margin: 0;
     padding: 0;
     background: #000;
+    height: 100%;
     overflow: hidden;
     touch-action: none;
-    height: 100%;
-    width: 100%;
 }
 
-/* Container 16:9 */
+/* Área 16:9 real centralizada */
 #cinema {
     position: fixed;
     top: 50%;
@@ -28,61 +26,56 @@ html, body {
     max-width: 177.77vh;
     transform: translate(-50%, -50%);
     background: #000;
+    overflow: hidden;
 }
 
-/* Círculo base */
+/* Círculo */
 .touch-circle {
     position: absolute;
-    width: 90px;
-    height: 90px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     pointer-events: none;
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-    animation: fadeIn 0.4s ease forwards;
+    transform: translate(-50%, -50%) scale(0.5);
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-/* Glow animado */
-.touch-circle::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    filter: blur(12px);
-    opacity: 0.6;
-}
-
-/* Fade in */
-@keyframes fadeIn {
-    to {
-        opacity: 0.85;
-        transform: translate(-50%, -50%) scale(1);
-    }
+/* Ativo */
+.touch-circle.active {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 /* Fade out */
-.fade-out {
-    animation: fadeOut 0.4s ease forwards;
+.touch-circle.fade-out {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
 }
 
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-    }
+/* Dim */
+.touch-circle.dim {
+    opacity: 0.15 !important;
 }
 
 /* Selecionado */
-.selected {
-    animation: winner 1.5s ease forwards;
+.touch-circle.selected {
+    animation: winnerPulse 1.2s ease-in-out infinite alternate;
+    z-index: 10;
 }
 
-@keyframes winner {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+@keyframes winnerPulse {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 20px currentColor,
+                    0 0 40px currentColor;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1.4);
+        box-shadow: 0 0 40px currentColor,
+                    0 0 80px currentColor;
+    }
 }
-
 </style>
 </head>
 <body>
@@ -93,7 +86,7 @@ html, body {
 
 const container = document.getElementById("cinema");
 
-const colors = [
+const baseColors = [
     "#00FFFF",
     "#FF00FF",
     "#FFD700",
@@ -102,86 +95,138 @@ const colors = [
     "#8A2BE2"
 ];
 
+let availableColors = [...baseColors];
 let activeTouches = new Map();
-let availableColors = [...colors];
 let selectionTimer = null;
 
-/* Pega cor sem repetir */
+/* Cor sem repetir */
 function getColor() {
     if (availableColors.length === 0) {
-        availableColors = [...colors];
+        availableColors = [...baseColors];
     }
     const index = Math.floor(Math.random() * availableColors.length);
     return availableColors.splice(index, 1)[0];
 }
 
+/* Posição correta dentro do 16:9 */
+function getRelativePosition(touch) {
+    const rect = container.getBoundingClientRect();
+    return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+    };
+}
+
 /* Reinicia contagem */
 function restartTimer() {
-    if (selectionTimer) clearTimeout(selectionTimer);
+    if (selectionTimer) {
+        clearTimeout(selectionTimer);
+        selectionTimer = null;
+    }
 
     if (activeTouches.size >= 2) {
         selectionTimer = setTimeout(selectRandom, 3000);
     }
 }
 
-/* Seleção */
+/* Seleção aleatória */
 function selectRandom() {
     if (activeTouches.size < 2) return;
 
     const keys = Array.from(activeTouches.keys());
-    const chosenKey = keys[Math.floor(Math.random() * keys.length)];
-    const chosenCircle = activeTouches.get(chosenKey);
+    const winnerKey = keys[Math.floor(Math.random() * keys.length)];
 
-    chosenCircle.classList.add("selected");
+    keys.forEach(key => {
+        const circle = activeTouches.get(key);
+        if (key === winnerKey) {
+            circle.classList.add("selected");
+        } else {
+            circle.classList.add("dim");
+        }
+    });
 }
 
-/* Touch start */
+/* TOUCH START */
 container.addEventListener("touchstart", e => {
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
+
+        if (activeTouches.size >= 6) return;
         if (activeTouches.has(touch.identifier)) continue;
+
+        const pos = getRelativePosition(touch);
 
         const circle = document.createElement("div");
         circle.classList.add("touch-circle");
 
         const color = getColor();
-        circle.style.background = color;
-        circle.style.boxShadow = `0 0 25px ${color}`;
-        circle.style.left = touch.clientX + "px";
-        circle.style.top = touch.clientY + "px";
+        circle.style.background =
+            `radial-gradient(circle,
+            ${color} 0%,
+            ${color}99 40%,
+            ${color}55 60%,
+            transparent 75%)`;
+
+        circle.style.color = color;
+        circle.style.left = pos.x + "px";
+        circle.style.top = pos.y + "px";
 
         container.appendChild(circle);
+
+        requestAnimationFrame(() => {
+            circle.classList.add("active");
+        });
+
         activeTouches.set(touch.identifier, circle);
     }
 
     restartTimer();
 });
 
-/* Touch move */
+/* TOUCH MOVE */
 container.addEventListener("touchmove", e => {
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
         const circle = activeTouches.get(touch.identifier);
-        if (circle) {
-            circle.style.left = touch.clientX + "px";
-            circle.style.top = touch.clientY + "px";
-        }
+        if (!circle) continue;
+
+        const pos = getRelativePosition(touch);
+        circle.style.left = pos.x + "px";
+        circle.style.top = pos.y + "px";
     }
 });
 
-/* Touch end */
+/* TOUCH END */
 container.addEventListener("touchend", e => {
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
         const circle = activeTouches.get(touch.identifier);
-        if (circle) {
-            circle.classList.add("fade-out");
-            setTimeout(() => circle.remove(), 400);
-            activeTouches.delete(touch.identifier);
-        }
+        if (!circle) continue;
+
+        circle.classList.add("fade-out");
+
+        setTimeout(() => {
+            circle.remove();
+        }, 400);
+
+        availableColors.push(circle.style.color);
+        activeTouches.delete(touch.identifier);
+    }
+
+    restartTimer();
+});
+
+/* TOUCH CANCEL */
+container.addEventListener("touchcancel", e => {
+    for (let touch of e.changedTouches) {
+        const circle = activeTouches.get(touch.identifier);
+        if (!circle) continue;
+
+        circle.remove();
+        activeTouches.delete(touch.identifier);
     }
 
     restartTimer();
