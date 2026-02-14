@@ -2,46 +2,62 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- Viewport otimizado para iPhone -->
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no,
+viewport-fit=cover">
+
 <title>Finger Selection Cinematic</title>
 
 <style>
+
+/* BLOQUEIO TOTAL iOS */
 html, body {
     margin: 0;
     padding: 0;
     background: #000;
     height: 100%;
     overflow: hidden;
+
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     touch-action: none;
 }
 
-/* Área 16:9 real centralizada */
-#cinema {
+/* Remove qualquer seleção */
+* {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+#app {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 100vw;
-    height: 56.25vw; /* 16:9 */
-    max-height: 100vh;
-    max-width: 177.77vh;
-    transform: translate(-50%, -50%);
+    inset: 0;
     background: #000;
     overflow: hidden;
 }
 
-/* Círculo */
+/* CÍRCULO */
 .touch-circle {
     position: absolute;
     width: 85px;
     height: 85px;
     border-radius: 50%;
     pointer-events: none;
+
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
-/* Ativo */
+/* Fade in */
 .touch-circle.active {
     opacity: 0.9;
     transform: translate(-50%, -50%) scale(1);
@@ -53,12 +69,12 @@ html, body {
     transform: translate(-50%, -50%) scale(0.4);
 }
 
-/* Dim */
+/* Escurecer perdedores */
 .touch-circle.dim {
     opacity: 0.15 !important;
 }
 
-/* Selecionado */
+/* Vencedor */
 .touch-circle.selected {
     animation: winnerPulse 1.2s ease-in-out infinite alternate;
     z-index: 10;
@@ -67,24 +83,33 @@ html, body {
 @keyframes winnerPulse {
     from {
         transform: translate(-50%, -50%) scale(1);
-        box-shadow: 0 0 20px currentColor,
-                    0 0 40px currentColor;
+        box-shadow:
+            0 0 20px currentColor,
+            0 0 40px currentColor;
     }
     to {
         transform: translate(-50%, -50%) scale(1.4);
-        box-shadow: 0 0 40px currentColor,
-                    0 0 80px currentColor;
+        box-shadow:
+            0 0 40px currentColor,
+            0 0 80px currentColor;
     }
 }
+
 </style>
 </head>
 <body>
 
-<div id="cinema"></div>
+<div id="app"></div>
 
 <script>
 
-const container = document.getElementById("cinema");
+/* BLOQUEIOS EXTRAS iOS */
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("gesturestart", e => e.preventDefault());
+document.addEventListener("gesturechange", e => e.preventDefault());
+document.addEventListener("gestureend", e => e.preventDefault());
+
+const app = document.getElementById("app");
 
 const baseColors = [
     "#00FFFF",
@@ -104,17 +129,9 @@ function getColor() {
     if (availableColors.length === 0) {
         availableColors = [...baseColors];
     }
+
     const index = Math.floor(Math.random() * availableColors.length);
     return availableColors.splice(index, 1)[0];
-}
-
-/* Posição correta dentro do 16:9 */
-function getRelativePosition(touch) {
-    const rect = container.getBoundingClientRect();
-    return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-    };
 }
 
 /* Reinicia contagem */
@@ -138,6 +155,7 @@ function selectRandom() {
 
     keys.forEach(key => {
         const circle = activeTouches.get(key);
+
         if (key === winnerKey) {
             circle.classList.add("selected");
         } else {
@@ -147,7 +165,8 @@ function selectRandom() {
 }
 
 /* TOUCH START */
-container.addEventListener("touchstart", e => {
+app.addEventListener("touchstart", e => {
+
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
@@ -155,24 +174,23 @@ container.addEventListener("touchstart", e => {
         if (activeTouches.size >= 6) return;
         if (activeTouches.has(touch.identifier)) continue;
 
-        const pos = getRelativePosition(touch);
-
         const circle = document.createElement("div");
         circle.classList.add("touch-circle");
 
         const color = getColor();
+
         circle.style.background =
             `radial-gradient(circle,
             ${color} 0%,
-            ${color}99 40%,
-            ${color}55 60%,
-            transparent 75%)`;
+            ${color}AA 40%,
+            ${color}55 65%,
+            transparent 80%)`;
 
         circle.style.color = color;
-        circle.style.left = pos.x + "px";
-        circle.style.top = pos.y + "px";
+        circle.style.left = touch.clientX + "px";
+        circle.style.top = touch.clientY + "px";
 
-        container.appendChild(circle);
+        app.appendChild(circle);
 
         requestAnimationFrame(() => {
             circle.classList.add("active");
@@ -185,24 +203,26 @@ container.addEventListener("touchstart", e => {
 });
 
 /* TOUCH MOVE */
-container.addEventListener("touchmove", e => {
+app.addEventListener("touchmove", e => {
+
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
         const circle = activeTouches.get(touch.identifier);
         if (!circle) continue;
 
-        const pos = getRelativePosition(touch);
-        circle.style.left = pos.x + "px";
-        circle.style.top = pos.y + "px";
+        circle.style.left = touch.clientX + "px";
+        circle.style.top = touch.clientY + "px";
     }
 });
 
 /* TOUCH END */
-container.addEventListener("touchend", e => {
+app.addEventListener("touchend", e => {
+
     e.preventDefault();
 
     for (let touch of e.changedTouches) {
+
         const circle = activeTouches.get(touch.identifier);
         if (!circle) continue;
 
@@ -210,7 +230,7 @@ container.addEventListener("touchend", e => {
 
         setTimeout(() => {
             circle.remove();
-        }, 400);
+        }, 350);
 
         availableColors.push(circle.style.color);
         activeTouches.delete(touch.identifier);
@@ -220,8 +240,10 @@ container.addEventListener("touchend", e => {
 });
 
 /* TOUCH CANCEL */
-container.addEventListener("touchcancel", e => {
+app.addEventListener("touchcancel", e => {
+
     for (let touch of e.changedTouches) {
+
         const circle = activeTouches.get(touch.identifier);
         if (!circle) continue;
 
