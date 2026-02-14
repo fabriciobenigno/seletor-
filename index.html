@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Touch Cinematic</title>
 
 <style>
@@ -24,7 +23,6 @@ html, body {
     overflow: hidden;
 }
 
-/* CÍRCULO */
 .touch {
     position: absolute;
     width: 80px;
@@ -36,24 +34,26 @@ html, body {
 
     transition:
         transform 0.35s ease,
-        opacity 0.35s ease,
-        filter 0.5s ease;
+        opacity 0.35s ease;
 
     backdrop-filter: blur(10px) saturate(160%);
     -webkit-backdrop-filter: blur(10px) saturate(160%);
     border: 2px solid rgba(255,255,255,0.2);
 }
 
+/* entrada */
 .touch.active {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
+/* não escolhidos */
 .touch.dimmed {
-    filter: brightness(0.25);
+    opacity: 0.25;
     transform: translate(-50%, -50%) scale(0.9);
 }
 
+/* escolhido */
 .touch.selected {
     animation: cinematicPulse 1.2s ease forwards;
     z-index: 10;
@@ -75,7 +75,7 @@ html, body {
 <script>
 const container = document.getElementById("container");
 
-const colors = [
+const baseColors = [
     "#FF3B30",
     "#34C759",
     "#007AFF",
@@ -84,40 +84,38 @@ const colors = [
     "#5AC8FA"
 ];
 
+let availableColors = [...baseColors];
 let touchesMap = {};
-let usedColors = [];
 let timer = null;
+let audioContext = null;
 
-/* SOM DE CONGRATULAÇÃO */
+/* Ativar áudio no primeiro toque */
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+/* Som de vitória */
 function playWinSound() {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioContext) return;
 
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
-    osc1.type = "triangle";
-    osc2.type = "sine";
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(700, audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.25);
 
-    osc1.frequency.setValueAtTime(600, ctx.currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.6, audioContext.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
 
-    osc2.frequency.setValueAtTime(900, ctx.currentTime);
-    osc2.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.2);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
 
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc1.start();
-    osc2.start();
-
-    osc1.stop(ctx.currentTime + 0.35);
-    osc2.stop(ctx.currentTime + 0.35);
+    osc.start();
+    osc.stop(audioContext.currentTime + 0.4);
 }
 
 /* Reinicia contador */
@@ -149,20 +147,21 @@ function selectRandom() {
 /* TOUCH START */
 container.addEventListener("touchstart", (e) => {
 
+    initAudio();
+
     Array.from(e.changedTouches).forEach(touch => {
 
         if (Object.keys(touchesMap).length >= 6) return;
+        if (availableColors.length === 0) return;
 
         const circle = document.createElement("div");
         circle.classList.add("touch");
 
-        const available = colors.filter(c => !usedColors.includes(c));
-        const color = available.length > 0
-            ? available[Math.floor(Math.random() * available.length)]
-            : colors[Math.floor(Math.random() * colors.length)];
+        const randomIndex = Math.floor(Math.random() * availableColors.length);
+        const color = availableColors.splice(randomIndex, 1)[0];
 
+        circle.dataset.color = color;
         circle.style.background = color;
-        usedColors.push(color);
 
         circle.style.left = touch.clientX + "px";
         circle.style.top = touch.clientY + "px";
@@ -181,7 +180,6 @@ container.addEventListener("touchstart", (e) => {
 
 /* TOUCH MOVE */
 container.addEventListener("touchmove", (e) => {
-
     Array.from(e.changedTouches).forEach(touch => {
         const circle = touchesMap[touch.identifier];
         if (circle) {
@@ -189,12 +187,10 @@ container.addEventListener("touchmove", (e) => {
             circle.style.top = touch.clientY + "px";
         }
     });
-
 }, { passive: true });
 
 /* TOUCH END */
 container.addEventListener("touchend", (e) => {
-
     Array.from(e.changedTouches).forEach(touch => {
         const circle = touchesMap[touch.identifier];
         if (circle) {
@@ -207,8 +203,7 @@ container.addEventListener("touchend", (e) => {
                 }
             }, 350);
 
-            const bg = circle.style.background;
-            usedColors = usedColors.filter(c => c !== bg);
+            availableColors.push(circle.dataset.color);
 
             delete touchesMap[touch.identifier];
         }
@@ -219,10 +214,10 @@ container.addEventListener("touchend", (e) => {
 
 /* TOUCH CANCEL */
 container.addEventListener("touchcancel", (e) => {
-
     Array.from(e.changedTouches).forEach(touch => {
         const circle = touchesMap[touch.identifier];
         if (circle) {
+            availableColors.push(circle.dataset.color);
             container.removeChild(circle);
             delete touchesMap[touch.identifier];
         }
@@ -231,6 +226,5 @@ container.addEventListener("touchcancel", (e) => {
     restartTimer();
 });
 </script>
-
 </body>
 </html>
