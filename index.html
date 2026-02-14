@@ -3,199 +3,238 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal de Cursos</title>
+<title>Escolha Cinematográfica</title>
 
 <style>
-
-/* ===== ANIMAÇÃO DE ENTRADA ===== */
-body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background: linear-gradient(135deg,#0b2d5c,#0f4aa1);
-    font-family: Arial, Helvetica, sans-serif;
-    animation: entradaSite 0.8s ease;
+html, body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at center, #000 0%, #050505 100%);
+    overflow: hidden;
+    touch-action: none;
+    height: 100%;
 }
 
-@keyframes entradaSite{
-    from{
-        opacity:0;
-        transform: scale(0.95);
-    }
-    to{
-        opacity:1;
-        transform: scale(1);
-    }
-}
-
-/* ===== CONTAINER ===== */
-.container{
-    text-align:center;
-    background: rgba(255,255,255,0.08);
-    padding:40px 30px;
-    border-radius:20px;
-    box-shadow:0 0 25px rgba(0,0,0,0.4);
-    width:90%;
-    max-width:560px;
-    box-sizing:border-box;
-}
-
-/* ===== TÍTULO ===== */
-h1{
-    color:#ffffff;
-    margin-bottom:30px;
-    font-size:26px;
-}
-
-/* ===== OPÇÕES ===== */
-.opcao{
-    width:100%;
-    padding:18px;
-    margin:12px 0;
-    font-size:20px;
-    border-radius:14px;
-    border:none;
-    cursor:pointer;
-    transition: all 0.3s ease;
-    font-weight:bold;
-}
-
-.opcao.ativa{
-    background:#ffffff;
-    color:#0b2d5c;
-}
-
-.opcao.ativa:hover{
-    background:#e6e6e6;
-    transform: scale(1.03);
-}
-
-/* ===== IDENTIFICAÇÃO DAS MODALIDADES – PADRÃO INSTITUCIONAL ===== */
-.identificacao-modalidades{
-    margin-top:34px;
-    padding-top:18px;
-    border-top:1px solid rgba(255,255,255,0.25);
-    color:#ffffff;
-    font-size:13.5px;
-    line-height:1.6;
-    text-align:left;
-}
-
-.identificacao-modalidades h2{
-    font-size:15px;
-    font-weight:600;
-    text-align:center;
-    margin-bottom:10px;
-}
-
-.identificacao-modalidades p{
-    margin-bottom:10px;
-}
-
-.identificacao-modalidades ul{
-    list-style:none;
-    padding:0;
-    margin:0;
-}
-
-.identificacao-modalidades li{
-    margin:5px 0;
-}
-
-/* ===== CRÉDITO ===== */
-.credito{
+/* Vinheta cinematográfica */
+body::after {
+    content: "";
     position: fixed;
-    bottom: 6px;
-    right: 10px;
-    font-size: 9px;
-    opacity: 0.25;
-    color: #ffffff;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 40%, black 100%);
     pointer-events: none;
 }
 
-/* ===== RESPONSIVIDADE ===== */
-@media (max-width:768px){
-    h1{
-        font-size:22px;
-        margin-bottom:20px;
+/* Dedo */
+.touch-point {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0;
+    filter: blur(20px);
+    transition: 
+        opacity 0.8s ease,
+        transform 0.8s ease,
+        filter 0.8s ease;
+}
+
+/* Fade in */
+.touch-point.active {
+    opacity: 1;
+    filter: blur(0px);
+    animation: breathe 3s ease-in-out infinite alternate;
+}
+
+/* Respiração suave */
+@keyframes breathe {
+    from { transform: translate(-50%, -50%) scale(1); }
+    to { transform: translate(-50%, -50%) scale(1.12); }
+}
+
+/* Fade out */
+.touch-point.fade-out {
+    opacity: 0 !important;
+    filter: blur(30px);
+    transform: translate(-50%, -50%) scale(0.5);
+}
+
+/* Escurecer perdedores */
+.dimmed {
+    opacity: 0.15 !important;
+    filter: blur(5px);
+}
+
+/* Vencedor cinematográfico */
+.selected {
+    animation: winnerPulse 1s ease-in-out infinite alternate;
+    z-index: 20;
+}
+
+@keyframes winnerPulse {
+    from {
+        transform: translate(-50%, -50%) scale(1.3);
+        box-shadow: 0 0 40px white;
     }
-    .opcao{
-        padding:14px;
-        font-size:18px;
-        margin:10px 0;
-    }
-    .container{
-        padding:30px 20px;
-    }
-    .identificacao-modalidades{
-        font-size:12.5px;
+    to {
+        transform: translate(-50%, -50%) scale(1.7);
+        box-shadow: 0 0 120px white;
     }
 }
 
-@media (max-width:480px){
-    h1{
-        font-size:20px;
-    }
-    .opcao{
-        padding:12px;
-        font-size:16px;
-    }
-    .container{
-        padding:25px 15px;
-    }
-    .identificacao-modalidades{
-        font-size:12px;
-    }
+/* Flash dramático */
+.flash {
+    position: fixed;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    animation: flashAnim 0.6s ease forwards;
 }
 
+@keyframes flashAnim {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
 </style>
 </head>
-
 <body>
 
-<div class="container">
-    <h1>Selecione a modalidade</h1>
-
-    <button class="opcao ativa" onclick="irParaEAD()">Graduação EAD / Híbrido</button>
-    <button class="opcao ativa" onclick="irParaPos()">Pós-graduação</button>
-    <button class="opcao ativa" onclick="irParaTecnico()">Técnico</button>
-    <button class="opcao ativa" onclick="irParaProfissionalizante()">Profissionalizante</button>
-
-    <div class="identificacao-modalidades">
-        <h2>Identificação das Modalidades Acadêmicas</h2>
-        <p>As siglas abaixo são utilizadas para identificar a modalidade acadêmica dos cursos ofertados neste portal.</p>
-        <ul>
-            <li><strong>EGRAD</strong> – Cursos de Graduação na modalidade EAD ou Híbrida</li>
-            <li><strong>ESPRE</strong> – Cursos de Semi-presencial na modalidade EAD ou Híbrida</li>
-            <li><strong>EPOS</strong> – Cursos de Pós-graduação na modalidade EAD</li>
-            <li><strong>ETEC</strong> – Cursos Técnicos</li>
-            <li><strong>EPRO</strong> – Cursos Profissionalizantes</li>
-        </ul>
-    </div>
-</div>
-
-<div class="credito">Desenvolvido por Fabricio Benigno</div>
-
 <script>
-function irParaEAD(){
-    window.location.href = "https://fabriciobenigno.github.io/EAD-Hibrido/";
+const colors = [
+    "#ff0033",
+    "#00ffee",
+    "#ffcc00",
+    "#9933ff",
+    "#00ff66",
+    "#ff6600"
+];
+
+let touchesMap = {};
+let selectionTimer = null;
+
+function createTouch(touch) {
+    if (Object.keys(touchesMap).length >= 6) return;
+
+    const div = document.createElement("div");
+    div.classList.add("touch-point");
+
+    const color = colors[Object.keys(touchesMap).length % colors.length];
+
+    div.style.background = `
+        radial-gradient(circle at center,
+        ${color} 0%,
+        ${color}aa 30%,
+        ${color}55 55%,
+        transparent 75%)
+    `;
+
+    document.body.appendChild(div);
+
+    touchesMap[touch.identifier] = {
+        element: div
+    };
+
+    updateTouchPosition(touch);
+
+    setTimeout(() => {
+        div.classList.add("active");
+    }, 10);
+
+    startSelectionCountdown();
 }
 
-function irParaPos(){
-    window.location.href = "https://fabriciobenigno.github.io/p-s-Gradua-o/";
+function updateTouchPosition(touch) {
+    const touchData = touchesMap[touch.identifier];
+    if (!touchData) return;
+
+    touchData.element.style.left = touch.clientX + "px";
+    touchData.element.style.top = touch.clientY + "px";
 }
 
-function irParaTecnico(){
-    window.location.href = "https://fabriciobenigno.github.io/T-cnico/";
+function removeTouch(touch) {
+    const touchData = touchesMap[touch.identifier];
+    if (!touchData) return;
+
+    touchData.element.classList.add("fade-out");
+
+    setTimeout(() => {
+        touchData.element.remove();
+    }, 800);
+
+    delete touchesMap[touch.identifier];
+
+    resetSelection();
 }
 
-function irParaProfissionalizante(){
-    window.location.href = "https://fabriciobenigno.github.io/Profissionalizantes/";
+function startSelectionCountdown() {
+    if (Object.keys(touchesMap).length < 2) return;
+    if (selectionTimer) return;
+
+    selectionTimer = setTimeout(() => {
+        selectRandomTouch();
+    }, 3000);
 }
+
+function resetSelection() {
+    clearTimeout(selectionTimer);
+    selectionTimer = null;
+
+    Object.values(touchesMap).forEach(t => {
+        t.element.classList.remove("selected", "dimmed");
+    });
+
+    if (Object.keys(touchesMap).length >= 2) {
+        startSelectionCountdown();
+    }
+}
+
+function selectRandomTouch() {
+    const keys = Object.keys(touchesMap);
+    if (keys.length < 2) return;
+
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+
+    /* Flash cinematográfico */
+    const flash = document.createElement("div");
+    flash.classList.add("flash");
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    Object.keys(touchesMap).forEach(key => {
+        if (key !== randomKey) {
+            touchesMap[key].element.classList.add("dimmed");
+        }
+    });
+
+    touchesMap[randomKey].element.classList.add("selected");
+}
+
+document.addEventListener("touchstart", e => {
+    for (let touch of e.changedTouches) {
+        createTouch(touch);
+    }
+});
+
+document.addEventListener("touchmove", e => {
+    for (let touch of e.changedTouches) {
+        updateTouchPosition(touch);
+    }
+});
+
+document.addEventListener("touchend", e => {
+    for (let touch of e.changedTouches) {
+        removeTouch(touch);
+    }
+});
+
+document.addEventListener("touchcancel", e => {
+    for (let touch of e.changedTouches) {
+        removeTouch(touch);
+    }
+});
 </script>
 
 </body>
 </html>
-
