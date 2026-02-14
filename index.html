@@ -1,42 +1,36 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Touch Cinematic</title>
 
-<title>quem vai beber?</title>
-
-<!-- Ícone do app -->
-<link rel="icon" href="Garrafa.ico" type="image/x-icon">
-<link rel="shortcut icon" href="Garrafa.ico" type="image/x-icon">
-<link rel="apple-touch-icon" href="Garrafa.ico">
-
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- Ícones e manifest para PWA -->
+<link rel="apple-touch-icon" href="Garrafa.png">
+<link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="quem vai beber?">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="quem vai beber?">
-<meta name="screen-orientation" content="landscape">
 
 <style>
 html, body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
+    background: #000;
     touch-action: none;
 }
 
 #container {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
     background: #000;
     overflow: hidden;
 }
 
-/* CÍRCULOS DE TOQUE */
 .touch {
     position: absolute;
     width: 80px;
@@ -45,7 +39,9 @@ html, body {
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.35s ease, opacity 0.35s ease;
+    transition:
+        transform 0.35s ease,
+        opacity 0.35s ease;
     backdrop-filter: blur(10px) saturate(160%);
     -webkit-backdrop-filter: blur(10px) saturate(160%);
     border: 2px solid rgba(255,255,255,0.2);
@@ -64,7 +60,7 @@ html, body {
 .touch.selected {
     animation: cinematicPulse 1.2s ease forwards;
     z-index: 10;
-    box-shadow: 0 0 60px rgba(255,255,255,0.9);
+    box-shadow: 0 0 50px rgba(255,255,255,0.9);
 }
 
 @keyframes cinematicPulse {
@@ -74,7 +70,7 @@ html, body {
     100% { transform: translate(-50%, -50%) scale(1.8); }
 }
 
-/* BOTÃO INSTALAR */
+/* Botão instalar */
 #installBtn {
     position: fixed;
     bottom: 20px;
@@ -110,9 +106,9 @@ html, body {
 </head>
 
 <body>
-
 <div id="container"></div>
 
+<!-- Botão instalar -->
 <button id="installBtn">Instalar</button>
 
 <div id="installGuide">
@@ -124,26 +120,34 @@ html, body {
   </div>
 </div>
 
-<audio id="winSound">
-<source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg">
-</audio>
-
 <script>
 const container = document.getElementById("container");
+
 const baseColors = ["#FF3B30","#34C759","#007AFF","#FF9500","#AF52DE","#5AC8FA"];
 let availableColors = [...baseColors];
 let touchesMap = {};
 let timer = null;
 let audioContext = null;
+let fullscreenActivated = false;
 
-/* ÁUDIO */
-function initAudio() {
-    if(!audioContext){
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+/* FULLSCREEN DINÂMICO */
+function enterFullscreen() {
+    if(fullscreenActivated) return;
+    fullscreenActivated = true;
+
+    if(document.documentElement.requestFullscreen){
+        document.documentElement.requestFullscreen();
+    } else if(document.documentElement.webkitRequestFullscreen){
+        document.documentElement.webkitRequestFullscreen();
     }
 }
 
-function playWinSound(){
+/* ÁUDIO */
+function initAudio() {
+    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playWinSound() {
     if(!audioContext) return;
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
@@ -184,10 +188,13 @@ function selectRandom(){
 
 /* TOUCH START */
 container.addEventListener("touchstart", (e)=>{
+    enterFullscreen(); // solicita fullscreen no primeiro toque
     initAudio();
+
     Array.from(e.changedTouches).forEach(touch=>{
         if(Object.keys(touchesMap).length>=6) return;
         if(availableColors.length===0) return;
+
         const circle=document.createElement("div");
         circle.classList.add("touch");
         const randomIndex=Math.floor(Math.random()*availableColors.length);
@@ -241,7 +248,13 @@ container.addEventListener("touchcancel",(e)=>{
     restartTimer();
 });
 
-/* INSTALAÇÃO */
+/* AJUSTE AO GIRAR TELA */
+window.addEventListener("resize", ()=>{
+    container.style.width = window.innerWidth+"px";
+    container.style.height = window.innerHeight+"px";
+});
+
+/* BOTÃO INSTALAR */
 const installBtn = document.getElementById("installBtn");
 const installGuide = document.getElementById("installGuide");
 
@@ -263,6 +276,5 @@ installBtn.addEventListener("click",()=>{
 
 function closeGuide(){installGuide.style.display="none";}
 </script>
-
 </body>
 </html>
