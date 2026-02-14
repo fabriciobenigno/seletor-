@@ -2,8 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Touch Cinematic</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="quem vai beber?">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="application-name" content="quem vai beber?">
+<meta name="theme-color" content="#000000">
+
+<title>quem vai beber?</title>
 
 <style>
 html, body {
@@ -11,18 +20,19 @@ html, body {
     padding: 0;
     background: #000;
     height: 100%;
+    width: 100%;
     overflow: hidden;
     touch-action: none;
 }
 
 #container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
+    position: fixed;
+    inset: 0;
     background: #000;
     overflow: hidden;
 }
 
+/* CÍRCULOS */
 .touch {
     position: absolute;
     width: 80px;
@@ -32,32 +42,27 @@ html, body {
     opacity: 0;
     pointer-events: none;
 
-    transition:
-        transform 0.35s ease,
-        opacity 0.35s ease;
+    transition: transform 0.35s ease, opacity 0.35s ease;
 
     backdrop-filter: blur(10px) saturate(160%);
     -webkit-backdrop-filter: blur(10px) saturate(160%);
     border: 2px solid rgba(255,255,255,0.2);
 }
 
-/* entrada */
 .touch.active {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
-/* não escolhidos */
 .touch.dimmed {
     opacity: 0.25;
     transform: translate(-50%, -50%) scale(0.9);
 }
 
-/* escolhido */
 .touch.selected {
     animation: cinematicPulse 1.2s ease forwards;
     z-index: 10;
-    box-shadow: 0 0 50px rgba(255,255,255,0.9);
+    box-shadow: 0 0 60px rgba(255,255,255,0.9);
 }
 
 @keyframes cinematicPulse {
@@ -66,11 +71,56 @@ html, body {
     70%  { transform: translate(-50%, -50%) scale(1.6); }
     100% { transform: translate(-50%, -50%) scale(1.8); }
 }
+
+/* BOTÃO INSTALAR */
+#installBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 25px;
+    font-weight: bold;
+    z-index: 9999;
+}
+
+#installGuide {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.guideBox {
+    background: #111;
+    color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 80%;
+}
 </style>
 </head>
 
 <body>
+
 <div id="container"></div>
+
+<button id="installBtn">Instalar</button>
+
+<div id="installGuide">
+  <div class="guideBox">
+    <p>Para instalar:</p>
+    <p>1️⃣ Toque no botão <strong>Compartilhar</strong></p>
+    <p>2️⃣ Escolha <strong>Adicionar à Tela de Início</strong></p>
+    <button onclick="closeGuide()">Entendi</button>
+  </div>
+</div>
 
 <script>
 const container = document.getElementById("container");
@@ -89,14 +139,13 @@ let touchesMap = {};
 let timer = null;
 let audioContext = null;
 
-/* Ativar áudio no primeiro toque */
+/* AUDIO */
 function initAudio() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 }
 
-/* Som de vitória */
 function playWinSound() {
     if (!audioContext) return;
 
@@ -118,7 +167,7 @@ function playWinSound() {
     osc.stop(audioContext.currentTime + 0.4);
 }
 
-/* Reinicia contador */
+/* TIMER */
 function restartTimer() {
     clearTimeout(timer);
     if (Object.keys(touchesMap).length > 0) {
@@ -126,7 +175,7 @@ function restartTimer() {
     }
 }
 
-/* Seleciona aleatório */
+/* SELEÇÃO */
 function selectRandom() {
     const keys = Object.keys(touchesMap);
     if (keys.length === 0) return;
@@ -204,7 +253,6 @@ container.addEventListener("touchend", (e) => {
             }, 350);
 
             availableColors.push(circle.dataset.color);
-
             delete touchesMap[touch.identifier];
         }
     });
@@ -225,6 +273,36 @@ container.addEventListener("touchcancel", (e) => {
 
     restartTimer();
 });
+
+/* INSTALAÇÃO */
+const installBtn = document.getElementById("installBtn");
+const installGuide = document.getElementById("installGuide");
+
+function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches 
+        || window.navigator.standalone === true;
+}
+
+function isIOS() {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+if (isStandalone()) {
+    installBtn.style.display = "none";
+}
+
+installBtn.addEventListener("click", () => {
+    if (isIOS()) {
+        installGuide.style.display = "flex";
+    } else {
+        alert("Use o menu do navegador para instalar.");
+    }
+});
+
+function closeGuide() {
+    installGuide.style.display = "none";
+}
 </script>
+
 </body>
 </html>
