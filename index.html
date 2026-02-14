@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Cursos</title>
+
+<style>
+
+/* ===== ANIMAÇÃO DE ENTRADA ===== */
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(135deg,#0b2d5c,#0f4aa1);
+    font-family: Arial, Helvetica, sans-serif;
+    animation: entradaSite 0.8s ease;
+}
+
+@keyframes entradaSite{
+    from{
+        opacity:0;
+        transform: scale(0.95);
+    }
+    to{
+        opacity:1;
+        transform: scale(1);
+    }
+}
+
+/* ===== CONTAINER ===== */
+.container{
+    text-align:center;
+    background: rgba(255,255,255,0.08);
+    padding:40px 30px;
+    border-radius:20px;
+    box-shadow:0 0 25px rgba(0,0,0,0.4);
+    width:90%;
+    max-width:560px;
+    box-sizing:border-box;
+}
+
+/* ===== TÍTULO ===== */
+h1{
+    color:#ffffff;
+    margin-bottom:30px;
+    font-size:26px;
+}
+
+/* ===== OPÇÕES ===== */
+.opcao{
+    width:100%;
+    padding:18px;
+    margin:12px 0;
+    font-size:20px;
+    border-radius:14px;
+    border:none;
+    cursor:pointer;
+    transition: all 0.3s ease;
+    font-weight:bold;
+}
+
+.opcao.ativa{
+    background:#ffffff;
+    color:#0b2d5c;
+}
+
+.opcao.ativa:hover{
+    background:#e6e6e6;
+    transform: scale(1.03);
+}
+
+/* ===== IDENTIFICAÇÃO DAS MODALIDADES – PADRÃO INSTITUCIONAL ===== */
+.identificacao-modalidades{
+    margin-top:34px;
+    padding-top:18px;
+    border-top:1px solid rgba(255,255,255,0.25);
+    color:#ffffff;
+    font-size:13.5px;
+    line-height:1.6;
+    text-align:left;
+}
+
+.identificacao-modalidades h2{
+    font-size:15px;
+    font-weight:600;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.identificacao-modalidades p{
+    margin-bottom:10px;
+}
+
+.identificacao-modalidades ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+}
+
+.identificacao-modalidades li{
+    margin:5px 0;
+}
+
+/* ===== CRÉDITO ===== */
+.credito{
+    position: fixed;
+    bottom: 6px;
+    right: 10px;
+    font-size: 9px;
+    opacity: 0.25;
+    color: #ffffff;
+    pointer-events: none;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width:768px){
+    h1{
+        font-size:22px;
+        margin-bottom:20px;
+    }
+    .opcao{
+        padding:14px;
+        font-size:18px;
+        margin:10px 0;
+    }
+    .container{
+        padding:30px 20px;
+    }
+    .identificacao-modalidades{
+        font-size:12.5px;
+    }
+}
+
+@media (max-width:480px){
+    h1{
+        font-size:20px;
+    }
+    .opcao{
+        padding:12px;
+        font-size:16px;
+    }
+    .container{
+        padding:25px 15px;
+    }
+    .identificacao-modalidades{
+        font-size:12px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Selecione a modalidade</h1>
+
+    <button class="opcao ativa" onclick="irParaEAD()">Graduação EAD / Híbrido</button>
+    <button class="opcao ativa" onclick="irParaPos()">Pós-graduação</button>
+    <button class="opcao ativa" onclick="irParaTecnico()">Técnico</button>
+    <button class="opcao ativa" onclick="irParaProfissionalizante()">Profissionalizante</button>
+
+    <div class="identificacao-modalidades">
+        <h2>Identificação das Modalidades Acadêmicas</h2>
+        <p>As siglas abaixo são utilizadas para identificar a modalidade acadêmica dos cursos ofertados neste portal.</p>
+        <ul>
+            <li><strong>EGRAD</strong> – Cursos de Graduação na modalidade EAD ou Híbrida</li>
+            <li><strong>ESPRE</strong> – Cursos de Semi-presencial na modalidade EAD ou Híbrida</li>
+            <li><strong>EPOS</strong> – Cursos de Pós-graduação na modalidade EAD</li>
+            <li><strong>ETEC</strong> – Cursos Técnicos</li>
+            <li><strong>EPRO</strong> – Cursos Profissionalizantes</li>
+        </ul>
+    </div>
+</div>
+
+<div class="credito">Desenvolvido por Fabricio Benigno</div>
+
+<script>
+function irParaEAD(){
+    window.location.href = "https://fabriciobenigno.github.io/EAD-Hibrido/";
+}
+
+function irParaPos(){
+    window.location.href = "https://fabriciobenigno.github.io/p-s-Gradua-o/";
+}
+
+function irParaTecnico(){
+    window.location.href = "https://fabriciobenigno.github.io/T-cnico/";
+}
+
+function irParaProfissionalizante(){
+    window.location.href = "https://fabriciobenigno.github.io/Profissionalizantes/";
+}
+</script>
+
+</body>
+</html>
+
