@@ -2,241 +2,188 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-content="width=device-width,
-initial-scale=1.0,
-maximum-scale=1.0,
-user-scalable=no,
-viewport-fit=cover">
-
-<title>Finger Selection Stable</title>
+<title>Touch Cinematic</title>
 
 <style>
-
 html, body {
     margin: 0;
     padding: 0;
     background: #000;
     height: 100%;
     overflow: hidden;
-
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
 }
 
-#app {
-    position: fixed;
-    inset: 0;
+#container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
     background: #000;
     overflow: hidden;
 }
 
 /* CÍRCULO */
-.touch-circle {
+.touch {
     position: absolute;
-    width: 90px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
     pointer-events: none;
 
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    transition:
+        transform 0.35s ease,
+        opacity 0.35s ease;
+
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    border: 2px solid rgba(255,255,255,0.2);
 }
 
-.touch-circle.active {
-    opacity: 0.95;
+/* ENTRADA */
+.touch.active {
     transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
 }
 
-.touch-circle.fade-out {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
+/* SELECIONADO */
+.touch.selected {
+    animation: pulse 1s ease forwards;
 }
 
-.touch-circle.dim {
-    opacity: 0.15 !important;
+@keyframes pulse {
+    0%   { transform: translate(-50%, -50%) scale(1); }
+    40%  { transform: translate(-50%, -50%) scale(1.7); }
+    70%  { transform: translate(-50%, -50%) scale(1.4); }
+    100% { transform: translate(-50%, -50%) scale(1.5); }
 }
-
-.touch-circle.selected {
-    animation: winnerPulse 1s ease-in-out infinite alternate;
-    z-index: 10;
-}
-
-@keyframes winnerPulse {
-    from {
-        transform: translate(-50%, -50%) scale(1);
-        box-shadow:
-            0 0 20px currentColor,
-            0 0 40px currentColor;
-    }
-    to {
-        transform: translate(-50%, -50%) scale(1.35);
-        box-shadow:
-            0 0 40px currentColor,
-            0 0 80px currentColor;
-    }
-}
-
 </style>
 </head>
-<body>
 
-<div id="app"></div>
+<body>
+<div id="container"></div>
 
 <script>
+const container = document.getElementById("container");
 
-document.addEventListener("contextmenu", e => e.preventDefault());
-
-const app = document.getElementById("app");
-
-const baseColors = [
-    "#00FFFF",
-    "#FF00FF",
-    "#FFD700",
-    "#00FF7F",
-    "#FF4500",
-    "#8A2BE2"
+const colors = [
+    "#FF3B30",
+    "#34C759",
+    "#007AFF",
+    "#FF9500",
+    "#AF52DE",
+    "#5AC8FA"
 ];
 
-let availableColors = [...baseColors];
-let activeTouches = {};
-let selectionTimer = null;
+let touchesMap = {};
+let usedColors = [];
+let timer = null;
 
-/* Cor sem repetir */
-function getColor() {
-    if (availableColors.length === 0) {
-        availableColors = [...baseColors];
-    }
-
-    const index = Math.floor(Math.random() * availableColors.length);
-    return availableColors.splice(index, 1)[0];
-}
-
-/* Reinicia contagem */
+/* Reinicia contador */
 function restartTimer() {
-    if (selectionTimer) {
-        clearTimeout(selectionTimer);
-        selectionTimer = null;
-    }
-
-    if (Object.keys(activeTouches).length >= 2) {
-        selectionTimer = setTimeout(selectRandom, 3000);
+    clearTimeout(timer);
+    if (Object.keys(touchesMap).length > 0) {
+        timer = setTimeout(selectRandom, 3000);
     }
 }
 
-/* Seleciona */
+/* Seleciona aleatório */
 function selectRandom() {
+    const keys = Object.keys(touchesMap);
+    if (keys.length === 0) return;
 
-    const keys = Object.keys(activeTouches);
-    if (keys.length < 2) return;
-
-    const winner = keys[Math.floor(Math.random() * keys.length)];
-
-    keys.forEach(id => {
-        if (id === winner) {
-            activeTouches[id].classList.add("selected");
-        } else {
-            activeTouches[id].classList.add("dim");
-        }
-    });
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    touchesMap[randomKey].classList.add("selected");
 }
 
-/* TOUCH START */
-app.addEventListener("touchstart", function(e) {
+/* Touch Start */
+container.addEventListener("touchstart", (e) => {
 
-    for (let i = 0; i < e.changedTouches.length; i++) {
+    Array.from(e.changedTouches).forEach(touch => {
 
-        const touch = e.changedTouches[i];
-
-        if (Object.keys(activeTouches).length >= 6) return;
-
-        if (activeTouches[touch.identifier]) continue;
+        if (Object.keys(touchesMap).length >= 6) return;
 
         const circle = document.createElement("div");
-        circle.className = "touch-circle";
+        circle.classList.add("touch");
 
-        const color = getColor();
+        // escolher cor não repetida
+        const available = colors.filter(c => !usedColors.includes(c));
+        const color = available.length > 0
+            ? available[Math.floor(Math.random() * available.length)]
+            : colors[Math.floor(Math.random() * colors.length)];
 
-        circle.style.background =
-            `radial-gradient(circle,
-            ${color} 0%,
-            ${color}AA 40%,
-            ${color}55 65%,
-            transparent 80%)`;
+        circle.style.background = color;
+        usedColors.push(color);
 
-        circle.style.color = color;
         circle.style.left = touch.clientX + "px";
         circle.style.top = touch.clientY + "px";
 
-        app.appendChild(circle);
+        container.appendChild(circle);
 
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             circle.classList.add("active");
-        }, 10);
+        });
 
-        activeTouches[touch.identifier] = circle;
-    }
-
-    restartTimer();
-}, { passive: true });
-
-/* TOUCH MOVE */
-app.addEventListener("touchmove", function(e) {
-
-    for (let i = 0; i < e.changedTouches.length; i++) {
-
-        const touch = e.changedTouches[i];
-        const circle = activeTouches[touch.identifier];
-        if (!circle) continue;
-
-        circle.style.left = touch.clientX + "px";
-        circle.style.top = touch.clientY + "px";
-    }
-
-}, { passive: true });
-
-/* TOUCH END */
-app.addEventListener("touchend", function(e) {
-
-    for (let i = 0; i < e.changedTouches.length; i++) {
-
-        const touch = e.changedTouches[i];
-        const circle = activeTouches[touch.identifier];
-        if (!circle) continue;
-
-        circle.classList.add("fade-out");
-
-        setTimeout(() => {
-            if (circle.parentNode) circle.remove();
-        }, 250);
-
-        availableColors.push(circle.style.color);
-        delete activeTouches[touch.identifier];
-    }
+        touchesMap[touch.identifier] = circle;
+    });
 
     restartTimer();
+});
+
+/* Touch Move */
+container.addEventListener("touchmove", (e) => {
+
+    Array.from(e.changedTouches).forEach(touch => {
+        const circle = touchesMap[touch.identifier];
+        if (circle) {
+            circle.style.left = touch.clientX + "px";
+            circle.style.top = touch.clientY + "px";
+        }
+    });
+
 }, { passive: true });
 
-/* TOUCH CANCEL (importante no iOS) */
-app.addEventListener("touchcancel", function(e) {
+/* Touch End */
+container.addEventListener("touchend", (e) => {
 
-    for (let i = 0; i < e.changedTouches.length; i++) {
+    Array.from(e.changedTouches).forEach(touch => {
+        const circle = touchesMap[touch.identifier];
+        if (circle) {
 
-        const touch = e.changedTouches[i];
-        const circle = activeTouches[touch.identifier];
-        if (!circle) continue;
+            circle.classList.remove("active");
 
-        if (circle.parentNode) circle.remove();
-        delete activeTouches[touch.identifier];
-    }
+            setTimeout(() => {
+                if (circle.parentNode) {
+                    container.removeChild(circle);
+                }
+            }, 350);
+
+            const bg = circle.style.background;
+            usedColors = usedColors.filter(c => c !== bg);
+
+            delete touchesMap[touch.identifier];
+        }
+    });
 
     restartTimer();
-}, { passive: true });
+});
 
+/* Touch Cancel */
+container.addEventListener("touchcancel", (e) => {
+
+    Array.from(e.changedTouches).forEach(touch => {
+        const circle = touchesMap[touch.identifier];
+        if (circle) {
+            container.removeChild(circle);
+            delete touchesMap[touch.identifier];
+        }
+    });
+
+    restartTimer();
+});
 </script>
 
 </body>
