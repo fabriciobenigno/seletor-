@@ -2,8 +2,12 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escolha Cinematográfica</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<title>Cinema Touch</title>
 
 <style>
 html, body {
@@ -15,58 +19,53 @@ html, body {
     height: 100%;
 }
 
-/* Vinheta cinematográfica */
+/* VINHETA CINEMATOGRÁFICA */
 body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at center, transparent 40%, black 100%);
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.9) 100%);
     pointer-events: none;
 }
 
-/* Dedo */
+/* DEDOS */
 .touch-point {
     position: absolute;
-    width: 160px;
-    height: 160px;
+    width: 170px;
+    height: 170px;
     border-radius: 50%;
     pointer-events: none;
-    transform: translate(-50%, -50%) scale(0.7);
+    transform: translate(-50%, -50%) scale(0.6);
     opacity: 0;
-    filter: blur(20px);
-    transition: 
+    filter: blur(25px);
+    transition:
         opacity 0.8s ease,
         transform 0.8s ease,
         filter 0.8s ease;
 }
 
-/* Fade in */
 .touch-point.active {
     opacity: 1;
     filter: blur(0px);
     animation: breathe 3s ease-in-out infinite alternate;
 }
 
-/* Respiração suave */
 @keyframes breathe {
     from { transform: translate(-50%, -50%) scale(1); }
-    to { transform: translate(-50%, -50%) scale(1.12); }
+    to   { transform: translate(-50%, -50%) scale(1.15); }
 }
 
-/* Fade out */
-.touch-point.fade-out {
+.fade-out {
     opacity: 0 !important;
-    filter: blur(30px);
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate(-50%, -50%) scale(0.4);
+    filter: blur(35px);
 }
 
-/* Escurecer perdedores */
 .dimmed {
     opacity: 0.15 !important;
-    filter: blur(5px);
+    filter: blur(8px);
 }
 
-/* Vencedor cinematográfico */
 .selected {
     animation: winnerPulse 1s ease-in-out infinite alternate;
     z-index: 20;
@@ -78,12 +77,12 @@ body::after {
         box-shadow: 0 0 40px white;
     }
     to {
-        transform: translate(-50%, -50%) scale(1.7);
-        box-shadow: 0 0 120px white;
+        transform: translate(-50%, -50%) scale(1.8);
+        box-shadow: 0 0 150px white;
     }
 }
 
-/* Flash dramático */
+/* FLASH DRAMÁTICO */
 .flash {
     position: fixed;
     inset: 0;
@@ -114,6 +113,17 @@ const colors = [
 let touchesMap = {};
 let selectionTimer = null;
 
+/* REINICIAR CONTAGEM */
+function restartCountdown() {
+    clearTimeout(selectionTimer);
+    selectionTimer = null;
+
+    if (Object.keys(touchesMap).length >= 2) {
+        selectionTimer = setTimeout(selectRandomTouch, 3000);
+    }
+}
+
+/* CRIAR DEDO */
 function createTouch(touch) {
     if (Object.keys(touchesMap).length >= 6) return;
 
@@ -122,19 +132,16 @@ function createTouch(touch) {
 
     const color = colors[Object.keys(touchesMap).length % colors.length];
 
-    div.style.background = `
-        radial-gradient(circle at center,
+    div.style.background =
+        `radial-gradient(circle at center,
         ${color} 0%,
         ${color}aa 30%,
         ${color}55 55%,
-        transparent 75%)
-    `;
+        transparent 75%)`;
 
     document.body.appendChild(div);
 
-    touchesMap[touch.identifier] = {
-        element: div
-    };
+    touchesMap[touch.identifier] = div;
 
     updateTouchPosition(touch);
 
@@ -142,75 +149,57 @@ function createTouch(touch) {
         div.classList.add("active");
     }, 10);
 
-    startSelectionCountdown();
+    restartCountdown();
 }
 
+/* ATUALIZAR POSIÇÃO */
 function updateTouchPosition(touch) {
-    const touchData = touchesMap[touch.identifier];
-    if (!touchData) return;
+    const div = touchesMap[touch.identifier];
+    if (!div) return;
 
-    touchData.element.style.left = touch.clientX + "px";
-    touchData.element.style.top = touch.clientY + "px";
+    div.style.left = touch.clientX + "px";
+    div.style.top = touch.clientY + "px";
 }
 
+/* REMOVER DEDO */
 function removeTouch(touch) {
-    const touchData = touchesMap[touch.identifier];
-    if (!touchData) return;
+    const div = touchesMap[touch.identifier];
+    if (!div) return;
 
-    touchData.element.classList.add("fade-out");
+    div.classList.add("fade-out");
 
     setTimeout(() => {
-        touchData.element.remove();
+        div.remove();
     }, 800);
 
     delete touchesMap[touch.identifier];
 
-    resetSelection();
+    restartCountdown();
 }
 
-function startSelectionCountdown() {
-    if (Object.keys(touchesMap).length < 2) return;
-    if (selectionTimer) return;
-
-    selectionTimer = setTimeout(() => {
-        selectRandomTouch();
-    }, 3000);
-}
-
-function resetSelection() {
-    clearTimeout(selectionTimer);
-    selectionTimer = null;
-
-    Object.values(touchesMap).forEach(t => {
-        t.element.classList.remove("selected", "dimmed");
-    });
-
-    if (Object.keys(touchesMap).length >= 2) {
-        startSelectionCountdown();
-    }
-}
-
+/* SELECIONAR ALEATÓRIO */
 function selectRandomTouch() {
     const keys = Object.keys(touchesMap);
     if (keys.length < 2) return;
 
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
 
-    /* Flash cinematográfico */
+    /* FLASH CINEMATOGRÁFICO */
     const flash = document.createElement("div");
     flash.classList.add("flash");
     document.body.appendChild(flash);
     setTimeout(() => flash.remove(), 600);
 
-    Object.keys(touchesMap).forEach(key => {
+    keys.forEach(key => {
         if (key !== randomKey) {
-            touchesMap[key].element.classList.add("dimmed");
+            touchesMap[key].classList.add("dimmed");
         }
     });
 
-    touchesMap[randomKey].element.classList.add("selected");
+    touchesMap[randomKey].classList.add("selected");
 }
 
+/* EVENTOS TOUCH */
 document.addEventListener("touchstart", e => {
     for (let touch of e.changedTouches) {
         createTouch(touch);
