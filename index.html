@@ -3,101 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>quem vai beber?</title>
+
+<!-- ÍCONE DO APP -->
+<link rel="icon" href="Garrafa.ico" type="image/x-icon">
+<link rel="shortcut icon" href="Garrafa.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="Garrafa.ico">
+
 <meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="screen-orientation" content="landscape">
-<title>quem vai beber?</title>
 
 <style>
-* {
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    -webkit-tap-highlight-color: transparent;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+-webkit-tap-highlight-color: transparent;
 }
 
-body {
-    background: linear-gradient(135deg, #0f172a, #1e3a8a);
-    font-family: Arial, sans-serif;
-    overflow:hidden;
+body{
+background: linear-gradient(135deg,#0f172a,#1e3a8a);
+font-family: Arial, sans-serif;
+overflow:hidden;
 }
 
-#rotateWarning {
-    position:fixed;
-    inset:0;
-    background:#000;
-    color:#fff;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-    font-size:22px;
-    text-align:center;
+#rotateWarning{
+position:fixed;
+inset:0;
+background:#000;
+color:#fff;
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+font-size:22px;
+text-align:center;
 }
 
-header {
-    text-align:center;
-    padding:20px;
-    color:#fff;
-    font-size:28px;
-    font-weight:bold;
+.container{
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+gap:20px;
+padding:20px;
 }
 
-.iconDrink {
-    font-size:45px;
-    display:block;
-    margin-bottom:5px;
+.option{
+flex:1;
+background:#2563eb;
+color:#fff;
+padding:40px;
+text-align:center;
+border-radius:15px;
+font-size:24px;
+cursor:pointer;
+transition:0.3s;
+user-select:none;
 }
 
-.container {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:70vh;
-    gap:20px;
-    padding:20px;
+.option:hover{
+transform:scale(1.05);
 }
 
-.option {
-    flex:1;
-    background:#2563eb;
-    color:#fff;
-    padding:30px;
-    text-align:center;
-    border-radius:15px;
-    font-size:22px;
-    cursor:pointer;
-    transition:0.3s;
+.selected{
+background:#16a34a !important;
+transform:scale(1.1);
 }
 
-.option:hover {
-    transform:scale(1.05);
+.dimmed{
+background:#1e293b !important;
+opacity:0.4;
 }
 
-.selected {
-    background:#16a34a !important;
-    transform:scale(1.1);
-}
-
-.dimmed {
-    background:#1e293b !important;
-    opacity:0.4;
-}
-
-footer {
-    text-align:center;
-    padding:15px;
-}
-
-#installBtn {
-    padding:12px 20px;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    background:#facc15;
-    cursor:pointer;
-}
 </style>
 </head>
 
@@ -107,70 +88,44 @@ footer {
 🔄 Gire o celular para horizontal
 </div>
 
-<header>
-<span class="iconDrink">🥤</span>
-quem vai beber?
-</header>
-
 <div class="container" id="container">
-    <div class="option">Jogador 1</div>
-    <div class="option">Jogador 2</div>
-    <div class="option">Jogador 3</div>
-    <div class="option">Jogador 4</div>
+<div class="option">Jogador 1</div>
+<div class="option">Jogador 2</div>
+<div class="option">Jogador 3</div>
+<div class="option">Jogador 4</div>
 </div>
-
-<footer>
-<button id="installBtn" style="display:none;">Instalar App</button>
-</footer>
 
 <audio id="winSound">
 <source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg">
 </audio>
 
 <script>
-const options = document.querySelectorAll(".option");
-const container = document.getElementById("container");
-const sound = document.getElementById("winSound");
+const options=document.querySelectorAll(".option");
+const container=document.getElementById("container");
+const sound=document.getElementById("winSound");
 
-options.forEach(option => {
-    option.addEventListener("click", () => {
-        options.forEach(o => o.classList.add("dimmed"));
-        option.classList.remove("dimmed");
-        option.classList.add("selected");
-        sound.play();
-    });
+options.forEach(option=>{
+option.addEventListener("click",()=>{
+options.forEach(o=>o.classList.add("dimmed"));
+option.classList.remove("dimmed");
+option.classList.add("selected");
+sound.currentTime=0;
+sound.play();
+});
 });
 
 function checkOrientation(){
-    if(window.innerHeight > window.innerWidth){
-        document.getElementById("rotateWarning").style.display="flex";
-        container.style.display="none";
-    } else {
-        document.getElementById("rotateWarning").style.display="none";
-        container.style.display="flex";
-    }
+if(window.innerHeight>window.innerWidth){
+document.getElementById("rotateWarning").style.display="flex";
+container.style.display="none";
+}else{
+document.getElementById("rotateWarning").style.display="none";
+container.style.display="flex";
+}
 }
 
-window.addEventListener("resize", checkOrientation);
-window.addEventListener("load", checkOrientation);
-
-let deferredPrompt;
-const installBtn = document.getElementById("installBtn");
-
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = "inline-block";
-});
-
-installBtn.addEventListener("click", async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        installBtn.style.display = "none";
-    }
-});
+window.addEventListener("resize",checkOrientation);
+window.addEventListener("load",checkOrientation);
 </script>
 
 </body>
