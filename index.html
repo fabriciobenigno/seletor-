@@ -22,24 +22,11 @@
 html, body {
     margin: 0;
     padding: 0;
-    background: #000;
-    height: 100%;
     width: 100%;
+    height: 100%;
+    background: #000;
     overflow: hidden;
     touch-action: none;
-}
-
-#rotateWarning {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    color: #fff;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    font-size: 22px;
-    text-align: center;
 }
 
 #container {
@@ -49,7 +36,7 @@ html, body {
     overflow: hidden;
 }
 
-/* CÍRCULOS */
+/* CÍRCULOS DE TOQUE */
 .touch {
     position: absolute;
     width: 80px;
@@ -124,7 +111,6 @@ html, body {
 
 <body>
 
-<div id="rotateWarning">🔄 Gire o celular para horizontal</div>
 <div id="container"></div>
 
 <button id="installBtn">Instalar</button>
@@ -138,6 +124,10 @@ html, body {
   </div>
 </div>
 
+<audio id="winSound">
+<source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg">
+</audio>
+
 <script>
 const container = document.getElementById("container");
 const baseColors = ["#FF3B30","#34C759","#007AFF","#FF9500","#AF52DE","#5AC8FA"];
@@ -145,19 +135,6 @@ let availableColors = [...baseColors];
 let touchesMap = {};
 let timer = null;
 let audioContext = null;
-
-/* ORIENTAÇÃO */
-function checkOrientation() {
-    if (window.innerHeight > window.innerWidth) {
-        document.getElementById("rotateWarning").style.display = "flex";
-        container.style.display = "none";
-    } else {
-        document.getElementById("rotateWarning").style.display = "none";
-        container.style.display = "block";
-    }
-}
-window.addEventListener("resize", checkOrientation);
-window.addEventListener("load", checkOrientation);
 
 /* ÁUDIO */
 function initAudio() {
