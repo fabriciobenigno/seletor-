@@ -2,130 +2,289 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>quem vai beber?</title>
 
-<!-- ÍCONE DO APP -->
+<!-- Ícone do app -->
 <link rel="icon" href="Garrafa.ico" type="image/x-icon">
 <link rel="shortcut icon" href="Garrafa.ico" type="image/x-icon">
 <link rel="apple-touch-icon" href="Garrafa.ico">
 
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="quem vai beber?">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="quem vai beber?">
 <meta name="screen-orientation" content="landscape">
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
--webkit-tap-highlight-color: transparent;
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    touch-action: none;
 }
 
-body{
-background: linear-gradient(135deg,#0f172a,#1e3a8a);
-font-family: Arial, sans-serif;
-overflow:hidden;
+#rotateWarning {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    font-size: 22px;
+    text-align: center;
 }
 
-#rotateWarning{
-position:fixed;
-inset:0;
-background:#000;
-color:#fff;
-display:none;
-justify-content:center;
-align-items:center;
-z-index:9999;
-font-size:22px;
-text-align:center;
+#container {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    overflow: hidden;
 }
 
-.container{
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-gap:20px;
-padding:20px;
+/* CÍRCULOS */
+.touch {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    border: 2px solid rgba(255,255,255,0.2);
 }
 
-.option{
-flex:1;
-background:#2563eb;
-color:#fff;
-padding:40px;
-text-align:center;
-border-radius:15px;
-font-size:24px;
-cursor:pointer;
-transition:0.3s;
-user-select:none;
+.touch.active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
 }
 
-.option:hover{
-transform:scale(1.05);
+.touch.dimmed {
+    opacity: 0.25;
+    transform: translate(-50%, -50%) scale(0.9);
 }
 
-.selected{
-background:#16a34a !important;
-transform:scale(1.1);
+.touch.selected {
+    animation: cinematicPulse 1.2s ease forwards;
+    z-index: 10;
+    box-shadow: 0 0 60px rgba(255,255,255,0.9);
 }
 
-.dimmed{
-background:#1e293b !important;
-opacity:0.4;
+@keyframes cinematicPulse {
+    0%   { transform: translate(-50%, -50%) scale(1); }
+    40%  { transform: translate(-50%, -50%) scale(2); }
+    70%  { transform: translate(-50%, -50%) scale(1.6); }
+    100% { transform: translate(-50%, -50%) scale(1.8); }
 }
 
+/* BOTÃO INSTALAR */
+#installBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 25px;
+    font-weight: bold;
+    z-index: 9999;
+}
+
+#installGuide {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.guideBox {
+    background: #111;
+    color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 80%;
+}
 </style>
 </head>
 
 <body>
 
-<div id="rotateWarning">
-🔄 Gire o celular para horizontal
-</div>
+<div id="rotateWarning">🔄 Gire o celular para horizontal</div>
+<div id="container"></div>
 
-<div class="container" id="container">
-<div class="option">Jogador 1</div>
-<div class="option">Jogador 2</div>
-<div class="option">Jogador 3</div>
-<div class="option">Jogador 4</div>
-</div>
+<button id="installBtn">Instalar</button>
 
-<audio id="winSound">
-<source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg">
-</audio>
+<div id="installGuide">
+  <div class="guideBox">
+    <p>Para instalar:</p>
+    <p>1️⃣ Toque em <strong>Compartilhar</strong></p>
+    <p>2️⃣ Escolha <strong>Adicionar à Tela de Início</strong></p>
+    <button onclick="closeGuide()">Entendi</button>
+  </div>
+</div>
 
 <script>
-const options=document.querySelectorAll(".option");
-const container=document.getElementById("container");
-const sound=document.getElementById("winSound");
+const container = document.getElementById("container");
+const baseColors = ["#FF3B30","#34C759","#007AFF","#FF9500","#AF52DE","#5AC8FA"];
+let availableColors = [...baseColors];
+let touchesMap = {};
+let timer = null;
+let audioContext = null;
 
-options.forEach(option=>{
-option.addEventListener("click",()=>{
-options.forEach(o=>o.classList.add("dimmed"));
-option.classList.remove("dimmed");
-option.classList.add("selected");
-sound.currentTime=0;
-sound.play();
-});
-});
-
-function checkOrientation(){
-if(window.innerHeight>window.innerWidth){
-document.getElementById("rotateWarning").style.display="flex";
-container.style.display="none";
-}else{
-document.getElementById("rotateWarning").style.display="none";
-container.style.display="flex";
+/* ORIENTAÇÃO */
+function checkOrientation() {
+    if (window.innerHeight > window.innerWidth) {
+        document.getElementById("rotateWarning").style.display = "flex";
+        container.style.display = "none";
+    } else {
+        document.getElementById("rotateWarning").style.display = "none";
+        container.style.display = "block";
+    }
 }
+window.addEventListener("resize", checkOrientation);
+window.addEventListener("load", checkOrientation);
+
+/* ÁUDIO */
+function initAudio() {
+    if(!audioContext){
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
 }
 
-window.addEventListener("resize",checkOrientation);
-window.addEventListener("load",checkOrientation);
+function playWinSound(){
+    if(!audioContext) return;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type="triangle";
+    osc.frequency.setValueAtTime(700, audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime+0.25);
+    gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.6, audioContext.currentTime+0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime+0.4);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start();
+    osc.stop(audioContext.currentTime+0.4);
+}
+
+/* TIMER */
+function restartTimer(){
+    clearTimeout(timer);
+    if(Object.keys(touchesMap).length>0){
+        timer = setTimeout(selectRandom,3000);
+    }
+}
+
+/* SELEÇÃO ALEATÓRIA */
+function selectRandom(){
+    const keys = Object.keys(touchesMap);
+    if(keys.length===0) return;
+    const randomKey = keys[Math.floor(Math.random()*keys.length)];
+    Object.keys(touchesMap).forEach(key=>{
+        if(key===randomKey){
+            touchesMap[key].classList.add("selected");
+        } else {
+            touchesMap[key].classList.add("dimmed");
+        }
+    });
+    playWinSound();
+}
+
+/* TOUCH START */
+container.addEventListener("touchstart", (e)=>{
+    initAudio();
+    Array.from(e.changedTouches).forEach(touch=>{
+        if(Object.keys(touchesMap).length>=6) return;
+        if(availableColors.length===0) return;
+        const circle=document.createElement("div");
+        circle.classList.add("touch");
+        const randomIndex=Math.floor(Math.random()*availableColors.length);
+        const color=availableColors.splice(randomIndex,1)[0];
+        circle.dataset.color=color;
+        circle.style.background=color;
+        circle.style.left=touch.clientX+"px";
+        circle.style.top=touch.clientY+"px";
+        container.appendChild(circle);
+        requestAnimationFrame(()=>circle.classList.add("active"));
+        touchesMap[touch.identifier]=circle;
+    });
+    restartTimer();
+});
+
+/* TOUCH MOVE */
+container.addEventListener("touchmove",(e)=>{
+    Array.from(e.changedTouches).forEach(touch=>{
+        const circle = touchesMap[touch.identifier];
+        if(circle){
+            circle.style.left = touch.clientX + "px";
+            circle.style.top = touch.clientY + "px";
+        }
+    });
+},{passive:true});
+
+/* TOUCH END */
+container.addEventListener("touchend",(e)=>{
+    Array.from(e.changedTouches).forEach(touch=>{
+        const circle = touchesMap[touch.identifier];
+        if(circle){
+            circle.classList.remove("active");
+            setTimeout(()=>{if(circle.parentNode) container.removeChild(circle)},350);
+            availableColors.push(circle.dataset.color);
+            delete touchesMap[touch.identifier];
+        }
+    });
+    restartTimer();
+});
+
+/* TOUCH CANCEL */
+container.addEventListener("touchcancel",(e)=>{
+    Array.from(e.changedTouches).forEach(touch=>{
+        const circle = touchesMap[touch.identifier];
+        if(circle){
+            availableColors.push(circle.dataset.color);
+            container.removeChild(circle);
+            delete touchesMap[touch.identifier];
+        }
+    });
+    restartTimer();
+});
+
+/* INSTALAÇÃO */
+const installBtn = document.getElementById("installBtn");
+const installGuide = document.getElementById("installGuide");
+
+function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone===true;
+}
+
+function isIOS(){
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+if(isStandalone()) installBtn.style.display="none";
+
+installBtn.addEventListener("click",()=>{
+    if(isIOS()) installGuide.style.display="flex";
+    else alert("Use o menu do navegador para instalar.");
+});
+
+function closeGuide(){installGuide.style.display="none";}
 </script>
 
 </body>
